@@ -334,7 +334,6 @@ int hip_generate_R1(__u8 *data, hi_node *hi, hipcookie *cookie,
   tlv_r1_counter *r1cnt;
   tlv_puzzle *puzzle;
 
-  memset(data, 0, sizeof(data));
   hiph = (hiphdr*) data;
 
   /* build the HIP header */
