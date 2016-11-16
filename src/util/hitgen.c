@@ -524,7 +524,7 @@ void print_hitgen_usage()
 int main(int argc, char *argv[])
 {
   char name[255], basename[255], filename[255], confname[255];
-  char rnd_seed[255];
+  char rnd_seed[255], format[16];
   int i, have_filename = 0, do_publish = 0, do_conf = 0, do_noinput = 0;
   int do_append = 0;
   hi_options opts;
@@ -538,7 +538,11 @@ int main(int argc, char *argv[])
   snprintf(filename, sizeof(filename), "%s", SYSCONFDIR);
   if (stat(filename, &stbuf) < 0)
     {
-      mkdir(filename, 755);
+      if (mkdir(filename, 755) < 0)
+        {
+          printf("Error making directory %s: %s\n", filename, strerror(errno));
+          exit(1);
+        }
     }
 #else
   WORD wVer = MAKEWORD( 2, 2);
@@ -648,7 +652,7 @@ int main(int argc, char *argv[])
       else if (strcmp(*argv, "-file") == 0)
         {
           argv++, argc--;
-          sprintf(filename, "%s", *argv);
+          snprintf(filename, sizeof(filename), "%s", *argv);
           have_filename = 1;
           argv++, argc--;
           continue;
@@ -817,9 +821,11 @@ int main(int argc, char *argv[])
     }
   else
     {
+      /* Make sure that we don't read in more than sizeof(rnd_seed) - 1 bytes. */
+      sprintf(format, "%%%us", (unsigned int)(sizeof(rnd_seed) - 1));
       printf("\nTo seed the random number generator, ");
       printf("please type some random text:\n");
-      if (scanf("%s", rnd_seed) < 1)
+      if (scanf(format, rnd_seed) < 1)
         {
           printf("Warning: could not read any input.\n");
         }

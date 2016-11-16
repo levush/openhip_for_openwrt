@@ -578,7 +578,7 @@ int hip_dht_lookup_address(hip_hit *hit, struct sockaddr *addr, int retry)
             {
               addr->sa_family = AF_INET;
               memcpy(SA2IP(addr), p_addr + 12, SAIPLEN(addr));
-              if (IN_MULTICAST(*(SA2IP(addr))))
+              if (IN_MULTICAST(*(__u32 *)(SA2IP(addr))))
                 {
                   err = -1;
                   break;
@@ -998,7 +998,8 @@ int hip_xmlrpc_getput(int mode, char *app, struct sockaddr *server,
         {
           dv = insert_dht_val(key);
         }
-      strncpy(dv->app, app, sizeof(dv->app));
+      strncpy(dv->app, app, sizeof(dv->app) - 1);
+      dv->app[sizeof(dv->app) - 1] = '\0';
       dv->value_hash_len = SHA_DIGEST_LENGTH;
       memcpy(dv->value_hash, value_hash, SHA_DIGEST_LENGTH);
       dv->secret_len = secret_len;
@@ -1112,7 +1113,8 @@ connect_retry:
 
   if (g_state != 0)
     {
-      return(-1);
+      retval = -1;
+      goto putget_exit;
     }
   if (retry && (retry_attempts > 0))
     {
@@ -1130,18 +1132,19 @@ connect_retry:
   if (connect(s, server, SALEN(server)) < 0)
     {
       log_(WARN, "DHT server connect error: %s\n", strerror(errno));
-      closesocket(s);
 #ifdef __WIN32__
       errno = WSAGetLastError();
       if (retry && ((errno == WSAETIMEDOUT) ||
                     (errno == WSAENETUNREACH)))
         {
+          closesocket(s);
           goto connect_retry;
         }
 #else
       if (retry &&
           ((errno == ETIMEDOUT) || (errno == EHOSTUNREACH)))
         {
+          closesocket(s);
           goto connect_retry;
         }
 #endif
@@ -1182,6 +1185,7 @@ connect_retry:
     }
   else if (FD_ISSET(s, &read_fdset))
     {
+      buff[sizeof(buff) - 1] = 0;
       if ((len = recv(s, buff, sizeof(buff) - 1, 0)) <= 0)
         {
           log_(WARN, "DHT error receiving from server: %s\n",
@@ -1219,11 +1223,14 @@ connect_retry:
     }
 
 putget_exit:
+  if ( s >= 0)
+    {
 #ifdef __WIN32__
-  closesocket(s);
+      closesocket(s);
 #else
-  close(s);
+      close(s);
 #endif
+    }
   if (doc != NULL)
     {
       xmlFreeDoc(doc);

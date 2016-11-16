@@ -832,7 +832,7 @@ int set_link_params(char *dev, int mtu)
 
   /* set link MTU */
   memset(&ifr, 0, sizeof(ifr));
-  strncpy(ifr.ifr_name, dev, IFNAMSIZ);
+  strncpy(ifr.ifr_name, dev, IFNAMSIZ - 1);
   ifr.ifr_mtu = mtu;
 
   err = ioctl(fd, SIOCSIFMTU, &ifr);
@@ -845,7 +845,7 @@ int set_link_params(char *dev, int mtu)
 
   /* set link to UP */
   memset(&ifr, 0, sizeof(ifr));
-  strncpy(ifr.ifr_name, dev, IFNAMSIZ);
+  strncpy(ifr.ifr_name, dev, IFNAMSIZ - 1);
 
   err = ioctl(fd, SIOCGIFFLAGS, &ifr);       /* get flags */
   if (err)

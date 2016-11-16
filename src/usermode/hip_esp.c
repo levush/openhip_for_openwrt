@@ -248,7 +248,11 @@ void send_icmp(struct ip *iph, struct ip_esp_hdr *esph)
 
   /* Open the socket */
 
-  s_icmp = socket(AF_INET, SOCK_RAW, IPPROTO_RAW);
+  if ((s_icmp = socket(AF_INET, SOCK_RAW, IPPROTO_RAW)) < 0)
+    {
+      printf("*** Error opening ICMP socket in send_icmp\n");
+      return;
+    }
   flags = 1;
   if (setsockopt(s_icmp, IPPROTO_IP, IP_HDRINCL, (char *)&flags,
                  sizeof(flags)) < 0)
@@ -1681,6 +1685,12 @@ void tunreader_shutdown()
   char data[8] = { 0,0,0,0,0,0,0,0 };
   struct sockaddr_in to;
   int s = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
+
+  if (s < 0)
+    {
+      return;
+    }
+
   to.sin_family = AF_INET;
   to.sin_addr.s_addr = htonl(g_tap_lsi);
   to.sin_port = htons(8000);

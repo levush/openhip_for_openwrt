@@ -1816,6 +1816,8 @@ int hip_parse_R2(__u8 *data, hip_assoc *hip_a)
   __u16 proposed_keymat_index = 0;
   __u32 proposed_spi_out = 0;
 
+  memset(&hmac_tlv_tmp, 0, sizeof(tlv_hmac));
+
   location = 0;
   hi_loc = 0;
   hiph = (hiphdr*) &data[location];
@@ -2076,6 +2078,11 @@ int hip_parse_update(const __u8 *data, hip_assoc *hip_a, struct rekey_info *rk,
   unsigned char *rvs_hmac;
   hip_assoc *hip_a_rvs;
 
+  if (!hip_a)
+    {
+      return(-1);
+    }
+
   memset(locators, 0, sizeof(locators));
   loc_count = 0;
   *nonce = 0;
@@ -2151,7 +2158,7 @@ int hip_parse_update(const __u8 *data, hip_assoc *hip_a, struct rekey_info *rk,
         }
       else if (!sig_verified && (type == PARAM_HIP_SIGNATURE))
         {
-          if ((hip_a == NULL) || (hip_a->peer_hi == NULL))
+          if (hip_a->peer_hi == NULL)
             {
               log_(WARN, "Received signature parameter "
                    "without any Host Identity context for "
@@ -3693,6 +3700,7 @@ int hip_handle_BOS(__u8 *data, struct sockaddr *src)
   if (handle_hi(&peer_hi, &data[location]) < 0)
     {
       log_(NORM, "Problem with HOST_ID in BOS, dropping.\n");
+      free_hi_node(peer_hi);
       return(-1);
     }
   if (!validate_hit(hiph->hit_sndr, peer_hi))
@@ -4376,7 +4384,7 @@ int handle_locators(hip_assoc *hip_a,
         {
           addr->sa_family = AF_INET;
           memcpy(SA2IP(addr), p_addr + 12, SAIPLEN(addr));
-          if (IN_MULTICAST(*(SA2IP(addr))))
+          if (IN_MULTICAST(*(__u32 *)(SA2IP(addr))))
             {
               continue;
             }

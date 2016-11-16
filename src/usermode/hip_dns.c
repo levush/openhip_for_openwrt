@@ -189,7 +189,7 @@ void *hip_dns(void *arg)
   printf("hip_dns() thread started...\n");
 #endif
   /* initialize UDP port 53 socket */
-  if (!(dnsfd = init_dns_socket()))
+  if ((dnsfd = init_dns_socket()) < 0)
     {
       printf("Could not create DNS socket, aborting DNS thread.\n");
       fflush(stdout);
@@ -315,7 +315,7 @@ retry_dns_bind:
 #else
       close(sockfd);
 #endif
-      return(0);
+      return(-1);
     }
 
   return(sockfd);
@@ -788,7 +788,7 @@ __u32 get_current_dns_server()
     {
       return(0);
     }
-  while ((len = fread(buff, 1, sizeof(buff), f)))
+  while ((len = fread(buff, 1, sizeof(buff) - 1, f)))
     {
       for (p = buff; (p = strstr(p, "nameserver ")); p += 11)
         {
@@ -1000,7 +1000,7 @@ void add_local_hip_nameserver(__u32 ip)
       return;
     }
   sprintf(tapstr, "nameserver %u.%u.%u.%u\n", NIPQUAD(ip));
-  len = fread(buff, sizeof(char), sizeof(buff), f);
+  len = fread(buff, sizeof(char), sizeof(buff) - 1, f);
   if (len && (strstr(buff, tapstr)))         /* does 1.x.x.x already exist? */
     {
       fclose(f);
@@ -1041,7 +1041,7 @@ void delete_local_hip_nameserver(__u32 ip)
     }
 
   sprintf(tapstr, "nameserver %u.%u.%u.%u\n", NIPQUAD(ip));
-  len = fread(buff, sizeof(char), sizeof(buff), f);
+  len = fread(buff, sizeof(char), sizeof(buff) - 1, f);
   fclose(f);
   /* if 1.x.x.x LSI already exists, rewrite the file without it */
   if (len && (strstr(buff, tapstr)))

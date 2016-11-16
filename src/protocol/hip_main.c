@@ -294,13 +294,12 @@ int main_loop(int argc, char **argv)
               exit(1);
             }
           af = ((strchr(*argv, ':') == NULL) ? AF_INET : AF_INET6);
-          OPT.trigger = (struct sockaddr*)malloc(
-            (af == AF_INET) ?
-            sizeof(struct
-                   sockaddr_in) :
-            sizeof(struct
-                   sockaddr_in6));
-          memset(OPT.trigger, 0, sizeof(struct sockaddr));
+          OPT.trigger = (struct sockaddr*)malloc( (af == AF_INET) ?
+            sizeof(struct sockaddr_in) :
+            sizeof(struct sockaddr_in6) );
+          memset(OPT.trigger, 0, (af == AF_INET) ?
+            sizeof(struct sockaddr_in) :
+            sizeof(struct sockaddr_in6) );
           OPT.trigger->sa_family = af;
           if (str_to_addr((__u8*)*argv, OPT.trigger) < 1)
             {
@@ -322,7 +321,7 @@ int main_loop(int argc, char **argv)
         {
           argv++, argc--;
           strncpy(HCNF.conf_filename, *argv,
-                  sizeof(HCNF.conf_filename));
+                  sizeof(HCNF.conf_filename) - 1);
           log_(NORM,      "Using user-provided hip.conf file " \
                "location.\n");
           argv++, argc--;
@@ -1679,7 +1678,7 @@ int hip_trigger(struct sockaddr *dst)
   OPT.trigger = NULL;
 
   /* Send the I1 */
-  if (hip_send_I1(hitp, hip_a) > 0)
+  if (hip_send_I1(&hiph.hit_sndr, hip_a) > 0)
     {
       set_state(hip_a, I1_SENT);
     }

@@ -1826,7 +1826,10 @@ queue_retrans:
       free(out);
     }
 
-  closesocket(s);
+  if (s >= 0)
+    {
+      closesocket(s);
+    }
 
   return ((err < 0) ? err : out_len);
 }
@@ -1858,6 +1861,7 @@ int hip_retransmit(hip_assoc *hip_a, __u8 *data, int len,
   msg.msg_iovlen = 1;
   msg.msg_control = 0L;
   msg.msg_controllen = 0;
+  msg.msg_flags = 0;
   iov.iov_len = len;
   iov.iov_base = data;
 #endif
@@ -1930,7 +1934,10 @@ int hip_check_bind(struct sockaddr *src, int num_attempts)
       return(0);
     }
 
-  s = socket(src->sa_family, SOCK_RAW, H_PROTO_HIP);
+  if ((s = socket(src->sa_family, SOCK_RAW, H_PROTO_HIP)) < 0)
+    {
+      return(-1);
+    }
 
   for (i = 0; i < num_attempts; i++)
     {
@@ -2298,7 +2305,7 @@ int build_tlv_signature(hi_node *hi, __u8 *data, int location, int R1)
   unsigned char md[SHA_DIGEST_LENGTH] = {0};
   DSA_SIG *dsa_sig;
   tlv_hip_sig *sig;
-  unsigned int sig_len;
+  unsigned int sig_len = 0;
   int err;
 
   if ((hi->algorithm_id == HI_ALG_DSA) && !hi->dsa)
