@@ -610,7 +610,8 @@ int hip_send_I2(hip_assoc *hip_a)
       /* don't send an IV with NULL encryption, copy data */
       memcpy(enc->iv, unenc_data, data_len);
       break;
-    case ESP_AES_CBC_HMAC_SHA1:
+    case ESP_AES128_CBC_HMAC_SHA1:
+    case ESP_AES256_CBC_HMAC_SHA1:
       /* do AES CBC encryption */
       key = get_key(hip_a, HIP_ENCRYPTION, FALSE);
       len = enc_key_len(hip_a->hip_transform);
@@ -1343,7 +1344,8 @@ int hip_send_update_proxy_ticket(hip_assoc *hip_mr, hip_assoc *hip_a)
 
   switch (hip_a->hip_transform)
     {
-    case ESP_AES_CBC_HMAC_SHA1:
+    case ESP_AES128_CBC_HMAC_SHA1:
+    case ESP_AES256_CBC_HMAC_SHA1:
     case ESP_3DES_CBC_HMAC_SHA1:
     case ESP_BLOWFISH_CBC_HMAC_SHA1:
     case ESP_NULL_HMAC_SHA1:
@@ -2399,7 +2401,8 @@ int build_tlv_hmac(hip_assoc *hip_a, __u8 *data, int location, int type)
 
   switch (hip_a->hip_transform)
     {
-    case ESP_AES_CBC_HMAC_SHA1:
+    case ESP_AES128_CBC_HMAC_SHA1:
+    case ESP_AES256_CBC_HMAC_SHA1:
     case ESP_3DES_CBC_HMAC_SHA1:
     case ESP_BLOWFISH_CBC_HMAC_SHA1:
     case ESP_NULL_HMAC_SHA1:

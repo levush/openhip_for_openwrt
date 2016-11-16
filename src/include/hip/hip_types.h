@@ -104,7 +104,7 @@
  * IPsec-related constants
  */
 #define DSA_PRIV 20 /* Size in bytes of DSA private key and Q value */
-#define HIP_KEY_SIZE 24 /* Must be large enough to hold largest possible key */
+#define HIP_KEY_SIZE 32 /* Must be large enough to hold largest possible key */
 #define HIP_DSA_SIG_SIZE 41 /* T(1) + R(20) + S(20)  from RFC 2536 */
 #define MAX_SIG_SIZE 512 /* RFC 3110 4096-bits max RSA length */
 #define NUMKEYS 8 /* HIP, HMAC, HIP, HMAC, ESP, AUTH, ESP, AUTH */

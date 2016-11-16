@@ -2125,7 +2125,8 @@ int build_tlv_proxy_hmac(hip_proxy_ticket *ticket, __u8 *data, int location,
 
   switch (ticket->transform_type)
     {
-    case ESP_AES_CBC_HMAC_SHA1:
+    case ESP_AES128_CBC_HMAC_SHA1:
+    case ESP_AES256_CBC_HMAC_SHA1:
     case ESP_3DES_CBC_HMAC_SHA1:
     case ESP_BLOWFISH_CBC_HMAC_SHA1:
     case ESP_NULL_HMAC_SHA1:

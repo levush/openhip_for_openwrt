@@ -1377,6 +1377,9 @@ int hip_handle_netlink(char *data, int length)
             {
               delete_address_from_list(&my_addr_head, addr,
                                        ifa->ifa_index);
+              /* Need to select_preferred_address() and
+               * publish_my_hits() */
+              retval = 1;
             }
 
           /* update each SA, handle HIP readdressing */

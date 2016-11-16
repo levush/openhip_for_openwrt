@@ -1306,7 +1306,8 @@ int hip_parse_I2(const __u8 *data, hip_assoc **hip_ar, hi_node *my_host_id,
               /* prepare keys and decrypt based on cipher */
               switch (hip_a->hip_transform)
                 {
-                case ESP_AES_CBC_HMAC_SHA1:
+                case ESP_AES128_CBC_HMAC_SHA1:
+                case ESP_AES256_CBC_HMAC_SHA1:
                   log_(NORM, "AES decryption key: 0x");
                   print_hex(key, key_len);
                   log_(NORM, "\n");
@@ -3897,7 +3898,8 @@ int validate_hmac(const __u8 *data, int data_len, __u8 *hmac, int hmac_len,
 
   switch (type)
     {
-    case ESP_AES_CBC_HMAC_SHA1:
+    case ESP_AES128_CBC_HMAC_SHA1:
+    case ESP_AES256_CBC_HMAC_SHA1:
     case ESP_3DES_CBC_HMAC_SHA1:
     case ESP_BLOWFISH_CBC_HMAC_SHA1:
     case ESP_NULL_HMAC_SHA1:
@@ -4022,7 +4024,7 @@ int handle_transforms(hip_assoc *hip_a, __u16 *transforms, int length, int esp)
       if (OPT.permissive)             /* AES is mandatory */
         {
           log_(WARN, "Continuing using AES.\n");
-          *chosen = ESP_AES_CBC_HMAC_SHA1;
+          *chosen = ESP_AES128_CBC_HMAC_SHA1;
         }
       else
         {
