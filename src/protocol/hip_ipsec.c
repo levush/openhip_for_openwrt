@@ -332,7 +332,7 @@ void start_base_exchange(struct sockaddr *dst)
     }
 
   /* Where do we send the I1? */
-  if ((hitp == NULL) && (!OPT.opportunistic))
+  if ((hits_equal(*hitp, zero_hit)) && (!OPT.opportunistic))
     {
       log_(NORM, "HIT not found, unable to send I1\n");
       return;
@@ -344,14 +344,13 @@ void start_base_exchange(struct sockaddr *dst)
       return;
     }
   memcpy(hiph.hit_rcvr, mine->hit, HIT_SIZE);
-  if (hitp == NULL)         /* Look for existing assoc. using addrs and HITs */
+  memcpy(hiph.hit_sndr, hitp, sizeof(hip_hit));
+  if (hits_equal(*hitp, zero_hit))         /* Look for existing assoc. using addrs and HITs */
     {
-      memcpy(hiph.hit_sndr, &zero_hit, sizeof(hip_hit));
       hip_a = find_hip_association(dst, src, &hiph);
     }
   else           /* Look for existing association using HITs */
     {
-      memcpy(hiph.hit_sndr, hitp, sizeof(hip_hit));
       hip_a = find_hip_association2(&hiph);
     }
   if (hip_a && (hip_a->state > UNASSOCIATED) &&
@@ -901,7 +900,6 @@ void hip_handle_multihoming_timeouts(struct timeval *now)
                             SA(&hip_a->mh->mh_addr));
           hip_send_notify(hip_a, NOTIFY_LOSS_DETECT,
                           loss_locator, sizeof(loss_locator));
-          memset(hip_a->mh, 0, sizeof(struct multihoming_info));
           free(hip_a->mh);
           hip_a->mh = NULL;
           /* loss report within the last 30 seconds, check total

@@ -343,7 +343,10 @@ void init_hip(int ac, char **av)
       exit(1);
     }
   /* set this socket to receive ICMP parameter problem messages */
-  setsockopt(s_esp, SOL_IP, IP_RECVERR, &optval, sizeof(optval));
+  if (setsockopt(s_esp, SOL_IP, IP_RECVERR, &optval, sizeof(optval)) < 0)
+    {
+      printf("Error setting ESP socket to receive ICMP parameter problem messages.\n");
+    }
 #endif
   if ((s_esp_udp = init_esp_input(AF_INET, SOCK_RAW, IPPROTO_UDP,
                                   HIP_UDP_PORT, "IPv4 UDP")) < 0)

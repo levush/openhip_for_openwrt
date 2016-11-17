@@ -133,34 +133,35 @@ typedef enum {
 /* encryption algorithms */
 typedef enum {
   RESERVED,                             /* 0 */
-  ESP_AES_CBC_HMAC_SHA1,                /* 1 */
+  ESP_AES128_CBC_HMAC_SHA1,             /* 1 */
   ESP_3DES_CBC_HMAC_SHA1,               /* 2 */
   ESP_3DES_CBC_HMAC_MD5,                /* 3 */
   ESP_BLOWFISH_CBC_HMAC_SHA1,           /* 4 */
   ESP_NULL_HMAC_SHA1,                   /* 5 */
   ESP_NULL_HMAC_MD5,                    /* 6 */
-  SUITE_ID_MAX,                         /* 7 */
+  ESP_AES256_CBC_HMAC_SHA1,             /* 7 */
+  SUITE_ID_MAX,                         /* 8 */
 } SUITE_IDS;
 #define ENCR_NULL(a) ((a == ESP_NULL_HMAC_SHA1) || \
                       (a == ESP_NULL_HMAC_MD5))
 /* Supported transforms are compressed into a bitmask... */
 /* Default HIP transforms proposed when none are specified in config */
 #define DEFAULT_HIP_TRANS \
-  ((1 << ESP_AES_CBC_HMAC_SHA1) | \
+  ((1 << ESP_AES256_CBC_HMAC_SHA1) | \
+   (1 << ESP_AES128_CBC_HMAC_SHA1) | \
    (1 << ESP_3DES_CBC_HMAC_SHA1) | \
    (1 << ESP_3DES_CBC_HMAC_MD5) | \
    (1 << ESP_BLOWFISH_CBC_HMAC_SHA1) | \
-   (1 << ESP_NULL_HMAC_SHA1) | \
-   (1 << ESP_NULL_HMAC_MD5))
+   (1 << ESP_NULL_HMAC_SHA1))
 /* Default ESP transforms proposed when none are specified in config */
 #define ESP_OFFSET 8
 #define DEFAULT_ESP_TRANS \
-  ((1 << (ESP_OFFSET + ESP_AES_CBC_HMAC_SHA1)) | \
+  ((1 << (ESP_OFFSET + ESP_AES256_CBC_HMAC_SHA1)) | \
+   (1 << (ESP_OFFSET + ESP_AES128_CBC_HMAC_SHA1)) | \
    (1 << (ESP_OFFSET + ESP_3DES_CBC_HMAC_SHA1)) | \
    (1 << (ESP_OFFSET + ESP_3DES_CBC_HMAC_MD5)) | \
    (1 << (ESP_OFFSET + ESP_BLOWFISH_CBC_HMAC_SHA1)) | \
-   (1 << (ESP_OFFSET + ESP_NULL_HMAC_SHA1)) | \
-   (1 << (ESP_OFFSET + ESP_NULL_HMAC_MD5)))
+   (1 << (ESP_OFFSET + ESP_NULL_HMAC_SHA1)))
 
 /* HI (signature) algorithms  */
 typedef enum {
@@ -217,7 +218,8 @@ typedef enum {
   KEY_LEN_MD5 = 16,             /* 128 bits per RFC 2403 */
   KEY_LEN_SHA1 = 20,            /* 160 bits per RFC 2404 */
   KEY_LEN_3DES = 24,            /* 192 bits (3x64-bit keys) RFC 2451 */
-  KEY_LEN_AES = 16,             /* 128 bits per RFC 3686; also 192, 256-bits */
+  KEY_LEN_AES128 = 16,          /* 128 bits per RFC 3686; also 192, 256-bits */
+  KEY_LEN_AES256 = 32,          /* 256 bits */
   KEY_LEN_BLOWFISH = 16,        /* 128 bits per RFC 2451 */
 } HIP_KEYLENS;
 

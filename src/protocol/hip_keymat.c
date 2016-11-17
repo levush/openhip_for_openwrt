@@ -376,7 +376,8 @@ int auth_key_len(int suite_id)
 {
   switch (suite_id)
     {
-    case ESP_AES_CBC_HMAC_SHA1:
+    case ESP_AES128_CBC_HMAC_SHA1:
+    case ESP_AES256_CBC_HMAC_SHA1:
     case ESP_3DES_CBC_HMAC_SHA1:
     case ESP_BLOWFISH_CBC_HMAC_SHA1:
     case ESP_NULL_HMAC_SHA1:
@@ -394,8 +395,10 @@ int enc_key_len(int suite_id)
 {
   switch (suite_id)
     {
-    case ESP_AES_CBC_HMAC_SHA1:
-      return(KEY_LEN_AES);
+    case ESP_AES128_CBC_HMAC_SHA1:
+      return(KEY_LEN_AES128);
+    case ESP_AES256_CBC_HMAC_SHA1:
+      return(KEY_LEN_AES256);
     case ESP_3DES_CBC_HMAC_SHA1:
     case ESP_3DES_CBC_HMAC_MD5:
       return(KEY_LEN_3DES);
@@ -414,7 +417,8 @@ int enc_iv_len(int suite_id)
 {
   switch (suite_id)
     {
-    case ESP_AES_CBC_HMAC_SHA1:
+    case ESP_AES128_CBC_HMAC_SHA1:
+    case ESP_AES256_CBC_HMAC_SHA1:
       return(16);               /* AES uses 128-bit IV */
     case ESP_3DES_CBC_HMAC_SHA1:
     case ESP_3DES_CBC_HMAC_MD5:
@@ -433,7 +437,8 @@ int transform_to_ealg(int transform)
 {
   switch (transform)
     {
-    case ESP_AES_CBC_HMAC_SHA1:                 /* AES-CBC enc */
+    case ESP_AES128_CBC_HMAC_SHA1:                 /* AES-CBC enc */
+    case ESP_AES256_CBC_HMAC_SHA1:
       return(SADB_X_EALG_AESCBC);
     case ESP_3DES_CBC_HMAC_SHA1:                /* 3DES-CBC enc */
     case ESP_3DES_CBC_HMAC_MD5:
@@ -452,7 +457,8 @@ int transform_to_aalg(int transform)
 {
   switch (transform)
     {
-    case ESP_AES_CBC_HMAC_SHA1:                 /* HMAC-SHA1 auth */
+    case ESP_AES128_CBC_HMAC_SHA1:                 /* HMAC-SHA1 auth */
+    case ESP_AES256_CBC_HMAC_SHA1:                 /* HMAC-SHA1 auth */
     case ESP_3DES_CBC_HMAC_SHA1:
     case ESP_BLOWFISH_CBC_HMAC_SHA1:
     case ESP_NULL_HMAC_SHA1:

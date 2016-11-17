@@ -1306,7 +1306,8 @@ int hip_parse_I2(const __u8 *data, hip_assoc **hip_ar, hi_node *my_host_id,
               /* prepare keys and decrypt based on cipher */
               switch (hip_a->hip_transform)
                 {
-                case ESP_AES_CBC_HMAC_SHA1:
+                case ESP_AES128_CBC_HMAC_SHA1:
+                case ESP_AES256_CBC_HMAC_SHA1:
                   log_(NORM, "AES decryption key: 0x");
                   print_hex(key, key_len);
                   log_(NORM, "\n");
@@ -1816,6 +1817,8 @@ int hip_parse_R2(__u8 *data, hip_assoc *hip_a)
   __u16 proposed_keymat_index = 0;
   __u32 proposed_spi_out = 0;
 
+  memset(&hmac_tlv_tmp, 0, sizeof(tlv_hmac));
+
   location = 0;
   hi_loc = 0;
   hiph = (hiphdr*) &data[location];
@@ -2076,6 +2079,11 @@ int hip_parse_update(const __u8 *data, hip_assoc *hip_a, struct rekey_info *rk,
   unsigned char *rvs_hmac;
   hip_assoc *hip_a_rvs;
 
+  if (!hip_a)
+    {
+      return(-1);
+    }
+
   memset(locators, 0, sizeof(locators));
   loc_count = 0;
   *nonce = 0;
@@ -2151,7 +2159,7 @@ int hip_parse_update(const __u8 *data, hip_assoc *hip_a, struct rekey_info *rk,
         }
       else if (!sig_verified && (type == PARAM_HIP_SIGNATURE))
         {
-          if ((hip_a == NULL) || (hip_a->peer_hi == NULL))
+          if (hip_a->peer_hi == NULL)
             {
               log_(WARN, "Received signature parameter "
                    "without any Host Identity context for "
@@ -3693,6 +3701,7 @@ int hip_handle_BOS(__u8 *data, struct sockaddr *src)
   if (handle_hi(&peer_hi, &data[location]) < 0)
     {
       log_(NORM, "Problem with HOST_ID in BOS, dropping.\n");
+      free_hi_node(peer_hi);
       return(-1);
     }
   if (!validate_hit(hiph->hit_sndr, peer_hi))
@@ -3889,7 +3898,8 @@ int validate_hmac(const __u8 *data, int data_len, __u8 *hmac, int hmac_len,
 
   switch (type)
     {
-    case ESP_AES_CBC_HMAC_SHA1:
+    case ESP_AES128_CBC_HMAC_SHA1:
+    case ESP_AES256_CBC_HMAC_SHA1:
     case ESP_3DES_CBC_HMAC_SHA1:
     case ESP_BLOWFISH_CBC_HMAC_SHA1:
     case ESP_NULL_HMAC_SHA1:
@@ -4014,7 +4024,7 @@ int handle_transforms(hip_assoc *hip_a, __u16 *transforms, int length, int esp)
       if (OPT.permissive)             /* AES is mandatory */
         {
           log_(WARN, "Continuing using AES.\n");
-          *chosen = ESP_AES_CBC_HMAC_SHA1;
+          *chosen = ESP_AES128_CBC_HMAC_SHA1;
         }
       else
         {
@@ -4376,7 +4386,7 @@ int handle_locators(hip_assoc *hip_a,
         {
           addr->sa_family = AF_INET;
           memcpy(SA2IP(addr), p_addr + 12, SAIPLEN(addr));
-          if (IN_MULTICAST(*(SA2IP(addr))))
+          if (IN_MULTICAST(*(__u32 *)(SA2IP(addr))))
             {
               continue;
             }

@@ -610,7 +610,8 @@ int hip_send_I2(hip_assoc *hip_a)
       /* don't send an IV with NULL encryption, copy data */
       memcpy(enc->iv, unenc_data, data_len);
       break;
-    case ESP_AES_CBC_HMAC_SHA1:
+    case ESP_AES128_CBC_HMAC_SHA1:
+    case ESP_AES256_CBC_HMAC_SHA1:
       /* do AES CBC encryption */
       key = get_key(hip_a, HIP_ENCRYPTION, FALSE);
       len = enc_key_len(hip_a->hip_transform);
@@ -1343,7 +1344,8 @@ int hip_send_update_proxy_ticket(hip_assoc *hip_mr, hip_assoc *hip_a)
 
   switch (hip_a->hip_transform)
     {
-    case ESP_AES_CBC_HMAC_SHA1:
+    case ESP_AES128_CBC_HMAC_SHA1:
+    case ESP_AES256_CBC_HMAC_SHA1:
     case ESP_3DES_CBC_HMAC_SHA1:
     case ESP_BLOWFISH_CBC_HMAC_SHA1:
     case ESP_NULL_HMAC_SHA1:
@@ -1826,7 +1828,10 @@ queue_retrans:
       free(out);
     }
 
-  closesocket(s);
+  if (s >= 0)
+    {
+      closesocket(s);
+    }
 
   return ((err < 0) ? err : out_len);
 }
@@ -1858,6 +1863,7 @@ int hip_retransmit(hip_assoc *hip_a, __u8 *data, int len,
   msg.msg_iovlen = 1;
   msg.msg_control = 0L;
   msg.msg_controllen = 0;
+  msg.msg_flags = 0;
   iov.iov_len = len;
   iov.iov_base = data;
 #endif
@@ -1930,7 +1936,10 @@ int hip_check_bind(struct sockaddr *src, int num_attempts)
       return(0);
     }
 
-  s = socket(src->sa_family, SOCK_RAW, H_PROTO_HIP);
+  if ((s = socket(src->sa_family, SOCK_RAW, H_PROTO_HIP)) < 0)
+    {
+      return(-1);
+    }
 
   for (i = 0; i < num_attempts; i++)
     {
@@ -2298,7 +2307,7 @@ int build_tlv_signature(hi_node *hi, __u8 *data, int location, int R1)
   unsigned char md[SHA_DIGEST_LENGTH] = {0};
   DSA_SIG *dsa_sig;
   tlv_hip_sig *sig;
-  unsigned int sig_len;
+  unsigned int sig_len = 0;
   int err;
 
   if ((hi->algorithm_id == HI_ALG_DSA) && !hi->dsa)
@@ -2392,7 +2401,8 @@ int build_tlv_hmac(hip_assoc *hip_a, __u8 *data, int location, int type)
 
   switch (hip_a->hip_transform)
     {
-    case ESP_AES_CBC_HMAC_SHA1:
+    case ESP_AES128_CBC_HMAC_SHA1:
+    case ESP_AES256_CBC_HMAC_SHA1:
     case ESP_3DES_CBC_HMAC_SHA1:
     case ESP_BLOWFISH_CBC_HMAC_SHA1:
     case ESP_NULL_HMAC_SHA1:

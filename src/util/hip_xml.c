@@ -330,7 +330,7 @@ void parse_xml_hostid(xmlNodePtr node, hi_node *hi)
       else if (strcmp((char *)node->name, "name") == 0)
         {
           memset(hi->name, 0, sizeof(hi->name));
-          strncpy(hi->name, data, sizeof(hi->name));
+          strncpy(hi->name, data, sizeof(hi->name) - 1);
           hi->name_len = strlen(hi->name);
         }
       else if ((strcmp((char *)node->name, "LSI") == 0) ||
@@ -686,6 +686,7 @@ void print_hi_to_buff(uint8_t **bufp, int *buf_len, hi_node *hi, int mine)
       *bufp = malloc(new_size);
       if (!*bufp)
         {
+          *bufp = old_buff;
           return;                     /* malloc error */
         }
       memset(*bufp, 0, new_size);
@@ -699,7 +700,7 @@ void print_hi_to_buff(uint8_t **bufp, int *buf_len, hi_node *hi, int mine)
 
     }
   /* add new output to the buffer */
-  strncat((char *)*bufp, tmp, *buf_len);
+  strncat((char *)*bufp, tmp, strnlen(tmp, sizeof(tmp) - 1));
 }
 
 

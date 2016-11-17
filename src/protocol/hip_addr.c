@@ -832,7 +832,7 @@ int set_link_params(char *dev, int mtu)
 
   /* set link MTU */
   memset(&ifr, 0, sizeof(ifr));
-  strncpy(ifr.ifr_name, dev, IFNAMSIZ);
+  strncpy(ifr.ifr_name, dev, IFNAMSIZ - 1);
   ifr.ifr_mtu = mtu;
 
   err = ioctl(fd, SIOCSIFMTU, &ifr);
@@ -845,7 +845,7 @@ int set_link_params(char *dev, int mtu)
 
   /* set link to UP */
   memset(&ifr, 0, sizeof(ifr));
-  strncpy(ifr.ifr_name, dev, IFNAMSIZ);
+  strncpy(ifr.ifr_name, dev, IFNAMSIZ - 1);
 
   err = ioctl(fd, SIOCGIFFLAGS, &ifr);       /* get flags */
   if (err)
@@ -1377,6 +1377,9 @@ int hip_handle_netlink(char *data, int length)
             {
               delete_address_from_list(&my_addr_head, addr,
                                        ifa->ifa_index);
+              /* Need to select_preferred_address() and
+               * publish_my_hits() */
+              retval = 1;
             }
 
           /* update each SA, handle HIP readdressing */

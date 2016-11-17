@@ -299,7 +299,7 @@ int hipCfg::endbox2Llip(const struct sockaddr *eb, struct sockaddr *llip)
   pthread_mutex_lock(&hipcfgmap_mutex);
   if (eb->sa_family == AF_INET)
     {
-      cout << "endbox2Llip: looking up IP for LSI = " << eb_s << endl;
+      // cout << "endbox2Llip: looking up IP for LSI = " << eb_s << endl;
       i = _legacyNode2EndboxMap.find(eb_s);
       if (i != _legacyNode2EndboxMap.end())
         {
@@ -313,15 +313,15 @@ int hipCfg::endbox2Llip(const struct sockaddr *eb, struct sockaddr *llip)
 
   if (!hit_s.empty())
     {
-      cout << "endbox2Llip: looking up IP for HIT = " << hit_s << endl;
+      // cout << "endbox2Llip: looking up IP for HIT = " << hit_s << endl;
       i = _endbox2LlipMap.find(hit_s);
       if (i != _endbox2LlipMap.end())
         {
           llip_s = (*i).second;
           llip->sa_family=AF_INET; /* only handle IPv4 address */
           str_to_addr(llip_s.c_str(), llip);
-          cout << "endbox2Llip: got IP " << llip_s.c_str() <<
-                  " for endbox = " << eb_s << endl;
+          // cout << "endbox2Llip: got IP " << llip_s.c_str() <<
+          //         " for endbox = " << eb_s << endl;
           rc = 0;
         }
     }
@@ -647,6 +647,7 @@ int hipCfg::callb(int rc, X509_STORE_CTX *ctx)
   int err;
   X509 *err_cert;
   X509_NAME *subject;
+  char x509_name[1024];
 
   err = X509_STORE_CTX_get_error(ctx);
   err_cert = X509_STORE_CTX_get_current_cert(ctx);
@@ -657,7 +658,7 @@ int hipCfg::callb(int rc, X509_STORE_CTX *ctx)
   if (rc == 1)
     {
       fprintf(stderr, "Accepting cert for %s\n",
-              X509_NAME_oneline(subject, NULL, 0));
+              X509_NAME_oneline(subject, x509_name, sizeof(x509_name)));
       return(1);
     }
   else
@@ -666,14 +667,14 @@ int hipCfg::callb(int rc, X509_STORE_CTX *ctx)
           (err == X509_V_ERR_CERT_HAS_EXPIRED))
         {
           fprintf(stderr, "Accepting cert with invalid time for %s\n",
-                  X509_NAME_oneline(subject, NULL, 0));
+                  X509_NAME_oneline(subject, x509_name, sizeof(x509_name)));
           ERR_clear_error();
           return(1);
         }
       else
         {
           fprintf(stderr, "Error with certificate %s\n",
-                  X509_NAME_oneline(subject, NULL, 0));
+                  X509_NAME_oneline(subject, x509_name, sizeof(x509_name)));
           fprintf(stderr, "  rc %d, error %d at depth %d:\n  %s\n",
                   rc, err, X509_STORE_CTX_get_error_depth(ctx),
                   X509_verify_cert_error_string(err));

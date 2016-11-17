@@ -231,7 +231,7 @@ hi_node *create_new_hi_node()
   if (ret == NULL)
     {
       log_(WARN, "Malloc error: creating new hi_node\n");
-      return(NULL);
+      goto err;
     }
   memset(ret, 0, sizeof(hi_node));
   pthread_mutex_init(&ret->addrs_mutex, NULL);
@@ -239,32 +239,58 @@ hi_node *create_new_hi_node()
   if (ret->rvs_addrs == NULL)
     {
       log_(WARN, "Malloc error: creating new rvs_addr\n");
-      return(NULL);
+      goto err;
     }
   *(ret->rvs_addrs) = NULL;
   ret->rvs_count = malloc(sizeof(int));
   if (ret->rvs_count == NULL)
     {
       log_(WARN, "Malloc error: creating new rvs_count\n");
-      return(NULL);
+      goto err;
     }
   *(ret->rvs_count) = 0;
   ret->rvs_mutex = malloc(sizeof(hip_mutex_t));
   if (ret->rvs_mutex == NULL)
     {
       log_(WARN, "Malloc error: creating new rvs_mutex\n");
-      return(NULL);
+      goto err;
     }
   pthread_mutex_init(ret->rvs_mutex, NULL);
   ret->rvs_cond = malloc(sizeof(hip_cond_t));
   if (ret->rvs_cond == NULL)
     {
       log_(WARN, "Malloc error: creating new rvs_cond\n");
-      return(NULL);
+      goto err;
     }
   pthread_cond_init (ret->rvs_cond, NULL);
 
   return(ret);
+
+err:
+
+  if (ret->rvs_cond)
+    {
+      free(ret->rvs_cond);
+    }
+  if (ret->rvs_mutex)
+    {
+      pthread_mutex_destroy(ret->rvs_mutex);
+      free(ret->rvs_mutex);
+    }
+  if (ret->rvs_count)
+    {
+      free(ret->rvs_count);
+    }
+  if (ret->rvs_addrs)
+    {
+      free(ret->rvs_addrs);
+    }
+  if (ret)
+    {
+      free(ret);
+    }
+  return(NULL);
+
 }
 
 /*
@@ -1372,6 +1398,7 @@ int is_dns_thread_disabled()
 int add_rvs_hostname_to_node(hi_node *hi, char *dnsName)
 {
   int i = 0, len;
+  char *name, **temp;
 
   /* Calculate current size of list */
   while (hi->rvs_hostnames[i] != NULL)
@@ -1380,17 +1407,26 @@ int add_rvs_hostname_to_node(hi_node *hi, char *dnsName)
       i++;
     }
 
-  /* Alloc memory for current i + 1 new name + NULL  */
-  hi->rvs_hostnames = realloc(hi->rvs_hostnames, (i + 2) * sizeof(char *));
-  hi->rvs_hostnames[i + 1] = NULL;
-  if (hi->rvs_hostnames == NULL)
+  len = strnlen(dnsName, 255) + 1;
+  name = malloc(len);
+  if (name == NULL)
     {
       return(-1);
     }
-  len = strnlen(dnsName, 255) + 1;
-  /* printf("     Adding %s (%d)\n", dnsName, len); */
-  hi->rvs_hostnames[i] = malloc(len);
-  memcpy(hi->rvs_hostnames[i], dnsName, len);
+
+  /* Alloc memory for current i + 1 new name + NULL  */
+  temp = realloc(hi->rvs_hostnames, (i + 2) * sizeof(char *));
+  if (temp == NULL)
+    {
+      free(name);
+      return(-1);
+    }
+
+  memcpy(name, dnsName, len - 1);
+  name[len - 1] = '\0';
+  hi->rvs_hostnames = temp;
+  hi->rvs_hostnames[i] = name;
+  hi->rvs_hostnames[i + 1] = NULL;
   return(0);
 }
 
@@ -1508,6 +1544,10 @@ __u32 receive_hip_dns_response(unsigned char *buff, int len)
       name_len = 0;
       for (qn_len = p[0]; qn_len > 0; qn_len = p[0])
         {
+          if ((name_len + qn_len + 1) > (NS_MAXDNAME - 1))
+            {
+              break;
+            }
           memcpy(&name[name_len], &p[1], qn_len);
           name_len += qn_len;
           name[name_len] = '.';
@@ -1522,7 +1562,7 @@ __u32 receive_hip_dns_response(unsigned char *buff, int len)
               break;
             }
         }
-      name[name_len - 1] = '\0';
+      name[name_len] = '\0';
       p += 5;           /* 1 byte zero length,
                          *  2 bytes type, 2 bytes class */
       if ((p - buff) > len)

@@ -867,7 +867,7 @@ void mr_process_update(hip_mr_client *hip_mr_c, int family,
               addr = SA(&spi_nats->peer_ipv4_addr);
               addr->sa_family = AF_INET;
               memcpy(SA2IP(addr), p_addr + 12, SAIPLEN(addr));
-              if (IN_MULTICAST(*(SA2IP(addr))))
+              if (IN_MULTICAST(*(__u32 *)(SA2IP(addr))))
                 {
                   memset(addr, 0,
                          sizeof(struct sockaddr_storage));
@@ -1572,13 +1572,21 @@ void *hip_mobile_router(void *arg)
     }
 
   /* Sockets used for change of address family */
+
   raw_ip4_socket = socket(PF_INET, SOCK_RAW, IPPROTO_RAW);
-  raw_ip6_socket = socket(PF_INET6, SOCK_RAW, IPPROTO_RAW);
-  if ((raw_ip4_socket < 0) || (raw_ip6_socket < 0))
+  if (raw_ip4_socket < 0)
     {
-      printf("*** hip_mobile_router() error opening RAW %s socket: "
-             "%s\n", (raw_ip4_socket < 0) ? "IPv4" : "IPv6",
-             strerror(errno));
+      printf("*** hip_mobile_router() error opening RAW IPv4 socket: "
+             "%s\n", strerror(errno));
+      return(NULL);
+    }
+
+  raw_ip6_socket = socket(PF_INET6, SOCK_RAW, IPPROTO_RAW);
+  if (raw_ip6_socket < 0)
+    {
+      printf("*** hip_mobile_router() error opening RAW IPv6 socket: "
+             "%s\n", strerror(errno));
+      close(raw_ip4_socket);
       return(NULL);
     }
 
@@ -2117,7 +2125,8 @@ int build_tlv_proxy_hmac(hip_proxy_ticket *ticket, __u8 *data, int location,
 
   switch (ticket->transform_type)
     {
-    case ESP_AES_CBC_HMAC_SHA1:
+    case ESP_AES128_CBC_HMAC_SHA1:
+    case ESP_AES256_CBC_HMAC_SHA1:
     case ESP_3DES_CBC_HMAC_SHA1:
     case ESP_BLOWFISH_CBC_HMAC_SHA1:
     case ESP_NULL_HMAC_SHA1:
@@ -2723,7 +2732,7 @@ int netfilter_queue_init(int queue_num)
     {
       printf("*** %s error opening Netlink socket: "
              "%s\n", __FUNCTION__, strerror(errno));
-      return(-1);
+      goto err;
     }
 
   memset(&nladdr, 0, sizeof(nladdr));
@@ -2735,14 +2744,14 @@ int netfilter_queue_init(int queue_num)
     {
       printf("*** %s getsockname error: %s\n",
              __FUNCTION__, strerror(errno));
-      return(-1);
+      goto err;
     }
   /* initial bind with port/pid zero */
   if (bind(nlfd, SA(&nladdr), sizeof(nladdr)) < 0)
     {
       printf("*** %s error with init Netlink socket bind: "
              "%s\n", __FUNCTION__, strerror(errno));
-      return(-1);
+      goto err;
     }
   /* get netlink port/pid assigned by the kernel */
   nladdr_len = sizeof(nladdr);
@@ -2750,13 +2759,13 @@ int netfilter_queue_init(int queue_num)
     {
       printf("*** %s getsockname error: %s\n",
              __FUNCTION__, strerror(errno));
-      return(-1);
+      goto err;
     }
   if (bind(nlfd, SA(&nladdr), sizeof(nladdr)) < 0)
     {
       printf("*** %s error binding Netlink socket: "
              "%s\n", __FUNCTION__, strerror(errno));
-      return(-1);
+      goto err;
     }
 
   /* disconnect any existing queue */
@@ -2764,27 +2773,36 @@ int netfilter_queue_init(int queue_num)
     {
       printf("*** %s error un-binding Netlink queue\n",
              __FUNCTION__);
-      return(-1);
+      goto err;
     }
   /* bind to address family */
   if (netfilter_queue_bind(nlfd, queue_num, AF_INET) < 0)
     {
       printf("*** %s error binding Netlink queue\n", __FUNCTION__);
-      return(-1);
+      goto err;
     }
   /* bind to queue number */
   if (netfilter_queue_bind(nlfd, queue_num, 0) < 0)
     {
       printf("*** %s error binding Netlink queue\n", __FUNCTION__);
-      return(-1);
+      goto err;
     }
   /* configure the queue */
   if (netfilter_queue_config_param(nlfd, queue_num) < 0)
     {
       printf("*** %s error setting queue mode\n", __FUNCTION__);
-      return(-1);
+      goto err;
     }
   return(nlfd);
+
+err:
+
+  if (nlfd > 0)
+    {
+      close(nlfd);
+    }
+  return(-1);
+
 }
 
 /*

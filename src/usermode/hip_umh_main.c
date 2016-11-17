@@ -131,6 +131,7 @@ int init_esp_input(int family, int type, int proto, int port, char *msg)
     {
       printf("%s socket() error: (%d) %s\n",
              msg, errno, strerror(errno));
+      closesocket(s);
       return(-1);
     }
 

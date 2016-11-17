@@ -577,6 +577,14 @@ int hip_sadb_delete_entry(hip_sadb_entry *entry, int unlink)
       memset(entry->e_key, 0, entry->e_keylen);
       free(entry->e_key);
     }
+  if (entry->aes_key)
+    {
+      free(entry->aes_key);
+    }
+  if (entry->bf_key)
+    {
+      free(entry->bf_key);
+    }
 
   pthread_mutex_unlock(&entry->rw_lock);
   pthread_mutex_destroy(&entry->rw_lock);
