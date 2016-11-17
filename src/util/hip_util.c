@@ -287,7 +287,6 @@ err:
     }
   if (ret)
     {
-      pthread_rwlock_destroy(&ret->addrs_rwlock);
       free(ret);
     }
   return(NULL);
